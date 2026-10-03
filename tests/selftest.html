@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ChiSpace self-test</title>
+  <style>
+    body { font: 13px/1.5 ui-monospace, Consolas, monospace; margin: 16px; background: #fff; color: #111; }
+    @media (prefers-color-scheme: dark) { body { background: #111; color: #eee; } }
+  </style>
+</head>
+<body>
+  <pre id="out">Running…
+</pre>
+  <script type="module">
+    import { run } from './selftest.js';
+    const out = document.getElementById('out');
+    window.selftest = new Promise((r) => setTimeout(r, 50)).then(() => run((line) => { out.textContent += line + '\n'; }))
+      .catch((e) => { out.textContent += 'ERROR ' + e.stack; return { error: String(e) }; });
+  </script>
+</body>
+</html>

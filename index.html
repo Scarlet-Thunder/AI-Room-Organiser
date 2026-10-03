@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ChiSpace · AI Feng Shui Room Planner</title>
+  <meta name="description" content="Set a budget, pick furniture, and let AI arrange your room by feng shui principles. Explore it in 3D and view it in your real room with AR." />
+  <meta name="theme-color" content="#2f6f5e" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="favicon.svg" alt="" width="30" height="30" />
+      <div>
+        <strong>ChiSpace</strong>
+        <span class="tagline">AI feng shui room planner</span>
+      </div>
+    </div>
+    <nav class="steps" role="tablist" aria-label="Steps">
+      <button role="tab" data-step="room" aria-selected="true"><span>1</span>Room</button>
+      <button role="tab" data-step="furniture" aria-selected="false"><span>2</span><i>Furniture<em class="lg"> &amp; budget</em></i></button>
+      <button role="tab" data-step="arrange" aria-selected="false"><span>3</span>Arrange</button>
+    </nav>
+    <div class="actions">
+      <button id="share-btn" title="Copy a link to this layout">🔗<em class="lg"> Share</em></button>
+      <button id="ar-btn" class="primary" title="See this layout in your room">📱 <em class="lg">View in </em>AR</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <!-- STEP 1: ROOM -->
+      <section class="panel" data-panel="room">
+        <h2>Your room</h2>
+        <div class="chips" id="presets" role="group" aria-label="Room type"></div>
+        <div class="row2">
+          <label>Width (m)<input type="number" id="room-w" min="2" max="12" step="0.1" /></label>
+          <label>Depth (m)<input type="number" id="room-d" min="2" max="12" step="0.1" /></label>
+        </div>
+        <label>Ceiling height (m)<input type="number" id="room-h" min="2.2" max="4" step="0.05" /></label>
+
+        <h3>Door</h3>
+        <div class="row2">
+          <label>Wall<select id="door-wall"></select></label>
+          <label>Width (m)<input type="number" id="door-width" min="0.7" max="1.8" step="0.05" /></label>
+        </div>
+        <label>Position along wall <output id="door-off-out"></output><input type="range" id="door-off" step="0.05" /></label>
+
+        <div class="h3-row"><h3>Windows</h3><button id="add-window" class="small">+ Add window</button></div>
+        <div id="windows"></div>
+        <p class="hint">North is the top of the plan. The bagua is laid out from the entrance (the door wall is the “bottom”), so you don’t need a compass.</p>
+        <button class="primary block next" data-goto="furniture">Next: furniture &amp; budget →</button>
+      </section>
+
+      <!-- STEP 2: FURNITURE & BUDGET -->
+      <section class="panel" data-panel="furniture" hidden>
+        <h2>Budget</h2>
+        <div class="budget-input">
+          <span>$</span><input type="number" id="budget" min="100" step="50" aria-label="Budget in dollars" />
+        </div>
+        <input type="range" id="budget-range" min="500" max="15000" step="100" aria-label="Budget slider" />
+        <div class="budget-bar"><div id="budget-fill"></div></div>
+        <p class="budget-status" id="budget-status"></p>
+
+        <h3>Your list</h3>
+        <p class="hint">★ = must-have. Tier “Auto” lets the budget optimizer choose Essential, Mid or Premium.</p>
+        <ul class="sel-list" id="sel-list"></ul>
+
+        <h3>Add furniture</h3>
+        <div id="catalog"></div>
+        <button class="primary block next" data-goto="arrange">Next: arrange with AI →</button>
+      </section>
+
+      <!-- STEP 3: ARRANGE -->
+      <section class="panel" data-panel="arrange" hidden>
+        <button class="primary block big" id="arrange-btn">✨ Arrange with AI</button>
+        <button class="block" id="another-btn">🎲 Try another layout</button>
+
+        <div class="score-card">
+          <div class="score-ring">
+            <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="bg" cx="60" cy="60" r="52" /><circle class="fg" id="score-fg" cx="60" cy="60" r="52" /></svg>
+            <div class="score-num" id="score-num">–</div>
+          </div>
+          <div>
+            <div class="score-label" id="score-label">Not arranged yet</div>
+            <p class="hint" id="score-hint">The AI tests thousands of layouts against feng shui rules and keeps the best one.</p>
+          </div>
+        </div>
+
+        <div class="item-card" id="item-card" hidden></div>
+
+        <h3>Feng shui checklist</h3>
+        <ul class="checks" id="checks"></ul>
+
+        <h3>Shopping list</h3>
+        <ul class="shop" id="shop"></ul>
+      </section>
+    </aside>
+
+    <section class="viewport">
+      <div class="view-toolbar">
+        <div class="seg" role="group" aria-label="View">
+          <button data-view="plan" aria-pressed="true">Plan</button>
+          <button data-view="3d" aria-pressed="false">3D</button>
+        </div>
+        <label class="check"><input type="checkbox" id="bagua-toggle" /> Bagua map</label>
+        <span class="score-chip" id="score-chip" hidden></span>
+      </div>
+      <div class="view" id="plan-host"></div>
+      <div class="view" id="three-host" hidden></div>
+      <div class="stale" id="stale" hidden>
+        <span>Your furniture or room changed.</span>
+        <button class="primary small" id="stale-btn">✨ Re-arrange</button>
+      </div>
+      <div class="busy" id="busy" hidden>
+        <div class="spinner"></div>
+        <strong>Arranging your room…</strong>
+        <span>Testing thousands of layouts against feng shui rules</span>
+        <div class="progress"><div id="busy-fill"></div></div>
+      </div>
+      <p class="view-hint" id="view-hint">Drag furniture to adjust · R to rotate the selected piece</p>
+    </section>
+  </main>
+
+  <dialog id="ar-dialog" aria-labelledby="ar-title">
+    <div class="ar-head">
+      <div>
+        <h2 class="ar-title" id="ar-title">View in AR</h2>
+        <p class="ar-sub"></p>
+      </div>
+      <button class="ghost close" id="ar-close" aria-label="Close">✕</button>
+    </div>
+    <div class="ar-body">
+      <div class="ar-viewer"></div>
+      <aside class="ar-qr" hidden>
+        <div class="qr-code"></div>
+        <p><strong>Open on your phone</strong><br />Scan to load this exact layout, then tap “View in your room”.</p>
+      </aside>
+    </div>
+    <p class="ar-note hint"></p>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

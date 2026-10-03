@@ -1,0 +1,9 @@
+{
+  "name": "ChiSpace: AI Feng Shui Room Planner",
+  "short_name": "ChiSpace",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f4f1ec",
+  "theme_color": "#2f6f5e",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
